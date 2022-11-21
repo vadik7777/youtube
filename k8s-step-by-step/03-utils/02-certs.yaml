@@ -19,7 +19,7 @@ spec:
   renewBefore: 360h # 15d
   subject:
     organizations:
-    - arturs k8s
+    - vadik k8s
   isCA: false
   privateKey:
     algorithm: RSA
@@ -30,15 +30,15 @@ spec:
     - server auth
     - client auth
   dnsNames:
-  - kryukov.local
-  - mon.kryukov.local
-  - grafana.kryukov.local
-  - prom.kryukov.local
-  - netdata.kryukov.local
+  - cluster.local
+  - mon.cluster.local
+  - grafana.cluster.local
+  - prom.cluster.local
+  - netdata.cluster.local
   ipAddresses:
-  - 192.168.218.174
-  - 192.168.218.175
-  - 192.168.218.176
+  - 172.16.16.5
+  - 172.16.16.6
+  - 172.16.16.7
   issuerRef:
     name: monitoring-issuer
     # We can reference ClusterIssuers by changing the kind here.

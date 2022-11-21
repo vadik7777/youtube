@@ -20,7 +20,21 @@
     state: started
     enabled: yes
 
-- name: Add firewalld rules
+- name: Add firewalld local rules
+  firewalld:
+    source: "{{ item }}"
+    zone: trusted
+    permanent: yes
+    state: enabled
+    immediate: true
+  loop:
+    - 172.16.16.5
+    - 172.16.16.6
+    - 172.16.16.7
+    - 10.233.0.0/18
+    - 10.233.64.0/18
+
+- name: Add firewalld external rules
   firewalld:
     port: "{{ item }}"
     zone: public
@@ -28,9 +42,30 @@
     state: enabled
     immediate: true
   loop:
-    - 6443/tcp
-    - 51820/tcp
-    - 51821/tcp
-    - 10250/tcp
-    - 2379-2380/tcp
-    - 8472/udp
+    - 31443/tcp
+    - 31080/tcp
+
+- name: Check is swap enable
+  shell: swapon
+  register: swap_present
+  changed_when: false
+  ignore_errors: true
+
+- name: If swap is enabled - disable it
+  shell: swapoff -a
+  when: swap_present.stdout != ""
+
+- name: Disable SWAP in fstab
+  replace:
+    path: /etc/fstab
+    regexp: '^([^#].*\s*swap\s*.*)$'
+    replace: '# \1'
+
+- name: Check Disable SELinux
+  selinux:
+    state: disabled
+  register: selinux_ret
+
+- name: Disable SELinux
+  shell: setenforce 0
+  when: selinux_ret.reboot_required
