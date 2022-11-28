@@ -3,8 +3,8 @@ injector:
 
 server:
   image:
-    repository: "hashicorp/vault"
-    tag: "1.8.4"
+    repository: "hashicorp/vault-k8s"
+    tag: "1.0.1"
     pullPolicy: IfNotPresent
   logLevel: "info"
   logFormat: "json"
@@ -42,7 +42,7 @@ server:
       }
 
       storage "postgresql" {
-        connection_url = "postgres://vault:password@base-pgbouncer.pgo.svc:5432/vault?sslmode=disable"
+        connection_url = "postgres://vault:vault@postgres.postgres.svc:5432/vault?sslmode=disable"
         ha_enabled = true
       }
 
