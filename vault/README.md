@@ -48,9 +48,7 @@ CREATE TABLE vault_ha_locks (
 
 ### helm install
 
-    helm repo add hashicorp https://helm.releases.hashicorp.com
-    helm repo update
-    helm install --namespace vault --create-namespace vault hashicorp/vault -f values.yaml 
+    helm install --namespace vault --create-namespace vault hashicorp/vault ./charts/vault-0.23.0.tgz -f values.yaml 
     
 ### ArgoCD install
 
