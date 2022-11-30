@@ -507,8 +507,11 @@ spec:
             timeoutSeconds: 1
           resources:
             requests:
-              cpu: 100m
-              memory: 90Mi
+              cpu: 50m
+              memory: 50Mi
+            limits:
+              cpu: 50m
+              memory: 70Mi
           securityContext:
             allowPrivilegeEscalation: true
             capabilities:
