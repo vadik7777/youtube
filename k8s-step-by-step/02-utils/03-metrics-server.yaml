@@ -140,11 +140,11 @@ spec:
           - --metric-resolution=15s
         resources:
           requests:
-            cpu: 100m
-            memory: 300Mi
+            cpu: 20m
+            memory: 50Mi
           limits:
-            cpu: 200m
-            memory: 500Mi
+            cpu: 50m
+            memory: 100Mi
         ports:
         - name: https
           containerPort: 4443
