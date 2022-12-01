@@ -62,7 +62,7 @@ CREATE TABLE vault_ha_locks (
 
     helm repo add secrets-store-csi-driver https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts
     helm repo update
-    helm install --namespace vault csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver
+    helm install --namespace vault --create-namespace csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver
 
 ### ArgoCD install
 

@@ -8,11 +8,11 @@ metadata:
     certmanager.k8s.io/cluster-issuer: monitoring-issuer
 spec:
   rules:
-    - host: "application.kryukov.local"
+    - host: 3qw.ru
       http:
         paths:
           - pathType: Prefix
-            path: /
+            path: /vault-test/
             backend:
               service:
                 name: openresty
