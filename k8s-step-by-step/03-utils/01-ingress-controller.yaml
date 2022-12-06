@@ -363,6 +363,7 @@ metadata:
   name: ingress-nginx-controller
   namespace: ingress-nginx
 spec:
+  externalTrafficPolicy: Local
   ipFamilies:
     - IPv4
   ipFamilyPolicy: SingleStack
@@ -422,7 +423,7 @@ metadata:
 spec:
   replicas: 2
   minReadySeconds: 0
-  revisionHistoryLimit: 3
+  revisionHistoryLimit: 10
   selector:
     matchLabels:
       app.kubernetes.io/component: controller
@@ -449,9 +450,10 @@ spec:
       containers:
         - args:
             - /nginx-ingress-controller
+            - --publish-service=$(POD_NAMESPACE)/ingress-nginx-controller
             - --election-id=ingress-nginx-leader
             - --controller-class=k8s.io/ingress-nginx
-            - --ingress-class=system-ingress
+            - --ingress-class=nginx
             - --configmap=$(POD_NAMESPACE)/ingress-nginx-controller
             - --validating-webhook=:8443
             - --validating-webhook-certificate=/usr/local/certificates/cert
@@ -507,11 +509,8 @@ spec:
             timeoutSeconds: 1
           resources:
             requests:
-              cpu: 20m
-              memory: 50Mi
-            limits:
-              cpu: 50m
-              memory: 100Mi
+              cpu: 100m
+              memory: 90Mi
           securityContext:
             allowPrivilegeEscalation: true
             capabilities:
