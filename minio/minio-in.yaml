@@ -1,80 +1,107 @@
 ---
 apiVersion: v1
+kind: Secret
+metadata:
+  name: mi
+  namespace: "minio"
+  labels:
+    app.kubernetes.io/name: minio
+    app.kubernetes.io/instance: mi
+type: Opaque
+data:
+  root-user: "YWRtaW4="
+  root-password: "YWRtaW4="
+  key.json: ""
+---
+apiVersion: v1
 kind: Service
 metadata:
-  name: mi-headless
-  namespace: minio
+  name: mi-minio-headless
+  namespace: "minio"
   labels:
-    app.kubernetes.io/name: mi
+    app.kubernetes.io/name: minio
     app.kubernetes.io/instance: mi
 spec:
   type: ClusterIP
   clusterIP: None
   ports:
-    - name: minio
+    - name: minio-api
       port: 9000
-      targetPort: minio
+      targetPort: minio-api
+    - name: minio-console
+      port: 9001
+      targetPort: minio-console
   publishNotReadyAddresses: true
   selector:
-    app.kubernetes.io/name: mi
+    app.kubernetes.io/name: minio
     app.kubernetes.io/instance: mi
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: mi
-  namespace: minio
+  name: mi-minio
+  namespace: "minio"
   labels:
-    app.kubernetes.io/name: mi
+    app.kubernetes.io/name: minio
     app.kubernetes.io/instance: mi
 spec:
   type: ClusterIP
   ports:
-    - name: minio
+    - name: minio-api
       port: 9000
-      targetPort: minio
+      targetPort: minio-api
+      nodePort: null
+    - name: minio-console
+      port: 9001
+      targetPort: minio-console
+      nodePort: null
   selector:
-    app.kubernetes.io/name: mi
+    app.kubernetes.io/name: minio
     app.kubernetes.io/instance: mi
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: mi
-  namespace: minio
+  name: mi-minio
+  namespace: "minio"
   labels:
-    app.kubernetes.io/name: mi
+    app.kubernetes.io/name: minio
     app.kubernetes.io/instance: mi
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/name: mi
+      app.kubernetes.io/name: minio
       app.kubernetes.io/instance: mi
-  serviceName: mi-headless
+  serviceName: mi-minio-headless
   replicas: 2
   podManagementPolicy: Parallel
+  updateStrategy:
+    type: RollingUpdate
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: mi
+        app.kubernetes.io/name: minio
         app.kubernetes.io/instance: mi
       annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/path: "/minio/v2/metrics/cluster"
+        checksum/credentials-secret: a0691e5c300383f6113666d5d7c99a1aca5aea8646904d46324d7d450b0b3d39
+        prometheus.io/path: /minio/v2/metrics/cluster
         prometheus.io/port: "9000"
+        prometheus.io/scrape: "true"
     spec:
+      
+      serviceAccountName: default
       affinity:
+        podAffinity:
+          
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
             - podAffinityTerm:
                 labelSelector:
                   matchLabels:
-                    app.kubernetes.io/name: mi
+                    app.kubernetes.io/name: minio
                     app.kubernetes.io/instance: mi
-                namespaces:
-                  - "minio"
                 topologyKey: kubernetes.io/hostname
-              weight: 100
+              weight: 1
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
@@ -85,30 +112,9 @@ spec:
                       - "yes"
       securityContext:
         fsGroup: 1001
-      initContainers:
-        - name: init-configs
-          image: busybox:1.33.0
-          imagePullPolicy: "IfNotPresent"
-          command:
-            - sh
-            - -c
-            - |
-              if [ ! -d /data-0/data ]; then
-                mkdir /data-0/data
-                chown 1001:1001 /data-0/data
-              fi
-              if [ ! -d /data-1/data ]; then
-                mkdir /data-1/data
-                chown 1001:1001 /data-1/data
-              fi
-          volumeMounts:
-            - name: data-0
-              mountPath: /data-0
-            - name: data-1
-              mountPath: /data-1
       containers:
         - name: minio
-          image: quay.io/bitnami/minio:2022.12.2-debian-11-r0
+          image: docker.io/bitnami/minio:2022.12.2-debian-11-r0
           imagePullPolicy: "IfNotPresent"
           securityContext:
             runAsNonRoot: true
@@ -119,35 +125,39 @@ spec:
             - name: MINIO_DISTRIBUTED_MODE_ENABLED
               value: "yes"
             - name: MINIO_DISTRIBUTED_NODES
-              value: "mi-{0...1}.mi-headless.minio.svc.cluster.local/data-{0...1}/data"
+              value: "mi-minio-{0...1}.mi-minio-headless.minio.svc.cluster.local:9000/data-{0...1}"
             - name: MINIO_SCHEME
               value: "http"
             - name: MINIO_FORCE_NEW_KEYS
               value: "no"
-            - name: MINIO_ROOT_USER # MINIO_ACCESS_KEY
+            - name: MINIO_ROOT_USER
               valueFrom:
                 secretKeyRef:
-                  name: mi
-                  key: user
-            - name: MINIO_ROOT_PASSWORD # MINIO_SECRET_KEY
+                  name: mi-minio
+                  key: root-user
+            - name: MINIO_ROOT_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: mi
-                  key: password
+                  name: mi-minio
+                  key: root-password
             - name: MINIO_SKIP_CLIENT
               value: "yes"
             - name: MINIO_BROWSER
               value: "off"
             - name: MINIO_PROMETHEUS_AUTH_TYPE
               value: "public"
+          envFrom:
           ports:
-            - name: minio
+            - name: minio-api
               containerPort: 9000
+              protocol: TCP
+            - name: minio-console
+              containerPort: 9001
               protocol: TCP
           livenessProbe:
             httpGet:
               path: /minio/health/live
-              port: minio
+              port: minio-api
               scheme: "HTTP"
             initialDelaySeconds: 5
             periodSeconds: 5
@@ -156,7 +166,7 @@ spec:
             failureThreshold: 5
           readinessProbe:
             tcpSocket:
-              port: minio
+              port: minio-api
             initialDelaySeconds: 5
             periodSeconds: 5
             timeoutSeconds: 1
@@ -170,6 +180,10 @@ spec:
               cpu: 50m
               memory: 100Mi
           volumeMounts:
+            - name: data-0
+              mountPath: /data-0
+            - name: data-1
+              mountPath: /data-1
             - mountPath: /data-0
               name: data-0
             - mountPath: /data-1
@@ -183,3 +197,7 @@ spec:
             path: /var/data-1
             type: DirectoryOrCreate
           name: data-1
+        - name: data-0
+          emptyDir: {}
+        - name: data-1
+          emptyDir: {}

@@ -8,10 +8,10 @@ metadata:
     kubernetes.io/ingress.class: "system-ingress"
 spec:
   rules:
-    - host: "minio.kryukov.local"
+    - host: 3qw.ru
       http:
         paths:
-          - path: /
+          - path: /minio/
             pathType: Prefix
             backend:
               service:
