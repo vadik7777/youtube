@@ -11,10 +11,10 @@ spec:
     - host: 3qw.ru
       http:
         paths:
-          - path: /minio/
+          - path: /
             pathType: Prefix
             backend:
               service:
-                name: console
+                name: mi
                 port:
-                  name: http
+                  name: minio-console

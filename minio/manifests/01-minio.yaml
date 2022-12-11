@@ -33,6 +33,9 @@ spec:
     - name: minio
       port: 9000
       targetPort: minio
+    - name: minio-console
+      port: 9001
+      targetPort: minio-console
   selector:
     app.kubernetes.io/name: mi
     app.kubernetes.io/instance: mi
@@ -108,7 +111,7 @@ spec:
               mountPath: /data-1
       containers:
         - name: minio
-          image: bitnami/minio:2022.12.2-debian-11-r0
+          image: bitnami/minio:2022.12.7-debian-11-r1
           imagePullPolicy: "IfNotPresent"
           securityContext:
             runAsNonRoot: true
@@ -137,12 +140,15 @@ spec:
             - name: MINIO_SKIP_CLIENT
               value: "yes"
             - name: MINIO_BROWSER
-              value: "off"
+              value: "on"
             - name: MINIO_PROMETHEUS_AUTH_TYPE
               value: "public"
           ports:
             - name: minio
               containerPort: 9000
+              protocol: TCP
+            - name: minio-console
+              containerPort: 9001
               protocol: TCP
           livenessProbe:
             httpGet:
