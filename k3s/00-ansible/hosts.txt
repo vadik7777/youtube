@@ -2,3 +2,4 @@
 vadik1 ansible_host=172.16.16.5
 vadik2 ansible_host=172.16.16.7
 vadik3 ansible_host=172.16.16.6
+vadik4 ansible_host=172.16.16.8
